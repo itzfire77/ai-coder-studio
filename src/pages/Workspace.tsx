@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { FolderGit2, Play, Save, Settings, PanelRight, PanelLeft, Bot, Download } from "lucide-react";
+import { Home, Play, Settings, ChevronRight, ChevronLeft, Download, FileCode, Folder } from "lucide-react";
 import { Link } from "react-router-dom";
 import { ChatInterface } from "@/components/ChatInterface";
 import { useAIChat } from "@/hooks/useAIChat";
@@ -65,24 +65,26 @@ const Workspace = () => {
   return (
     <div className="h-screen flex flex-col bg-background">
       {/* Top Bar */}
-      <header className="border-b border-border glass flex items-center justify-between px-3 sm:px-4 py-2 z-50">
-        <div className="flex items-center gap-2">
+      <header className="border-b border-border glass flex items-center justify-between px-3 sm:px-4 py-3 z-50">
+        <div className="flex items-center gap-3">
           <Link to="/dashboard">
             <Button variant="ghost" size="sm" className="px-2 sm:px-3">
-              <FolderGit2 className="h-4 w-4 mr-1 sm:mr-2" />
-              <span className="hidden sm:inline">Workspace</span>
+              <Home className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Dashboard</span>
             </Button>
           </Link>
+          <div className="h-5 w-px bg-border hidden sm:block" />
+          <span className="text-sm font-medium text-muted-foreground hidden sm:inline">UltimateBot Workspace</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="hidden sm:inline-flex" onClick={handleImportGitHub}>
+          <Button variant="outline" size="sm" className="hidden sm:inline-flex" onClick={handleImportGitHub}>
             <Download className="h-4 w-4 mr-2" />
-            Import GitHub
+            Import from GitHub
           </Button>
           <Button size="sm" className="bg-accent hover:bg-accent/90" onClick={handleRun}>
-            <Play className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Run</span>
+            <Play className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Run Preview</span>
           </Button>
           <Link to="/settings">
             <Button variant="ghost" size="sm" className="px-2">
@@ -103,9 +105,9 @@ const Workspace = () => {
         <main className="flex-1 flex flex-col">
           {/* Tab Bar */}
           <div className="border-b border-border glass px-3 sm:px-4 py-2 flex items-center gap-2">
-            <div className="px-3 py-1 bg-secondary rounded-md text-xs sm:text-sm flex items-center gap-2">
-              <span>🧾</span>
-              <span>{activeFile}</span>
+            <div className="px-3 py-1.5 bg-secondary rounded-md text-xs sm:text-sm flex items-center gap-2">
+              <FileCode className="h-3.5 w-3.5 text-primary" />
+              <span className="font-medium">{activeFile}</span>
             </div>
           </div>
 
@@ -119,24 +121,18 @@ const Workspace = () => {
             />
           </div>
 
-          {/* Console */}
-          <div className="h-32 border-t border-border glass p-3 sm:p-4 overflow-auto">
-            <div className="flex items-center gap-2 mb-1 text-xs font-semibold text-muted-foreground">
-              <span>🧪</span>
-              <span>Console</span>
-            </div>
-            <div className="text-xs sm:text-sm font-mono text-muted-foreground">
-              <p>No errors. Click "Run" to refresh the preview.</p>
-            </div>
+          {/* Console - Hidden for cleaner UI */}
+          <div className="h-8 border-t border-border glass px-3 flex items-center">
+            <span className="text-xs text-muted-foreground">Ready</span>
           </div>
         </main>
 
         {/* Preview & AI Panel */}
-        <aside className="w-[380px] border-l border-border glass flex flex-col overflow-hidden">
-          <div className="border-b border-border px-3 py-2 flex items-center justify-between text-xs font-semibold text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <PanelRight className="h-3 w-3" />
-              <span>👀 Live Preview</span>
+        <aside className="w-[420px] border-l border-border glass flex flex-col overflow-hidden">
+          <div className="border-b border-border px-4 py-2.5 flex items-center justify-between text-xs font-semibold">
+            <span className="flex items-center gap-2">
+              <ChevronRight className="h-4 w-4 text-primary" />
+              <span>Live Preview</span>
             </span>
           </div>
           <div className="flex-1 overflow-hidden bg-secondary/30">
@@ -198,28 +194,28 @@ const Workspace = () => {
           )}
         </div>
 
-        {/* Emoji bottom nav */}
-        <nav className="border-t border-border glass flex items-center justify-between px-2 py-1">
+        {/* Mobile bottom nav */}
+        <nav className="border-t border-border glass flex items-center justify-between px-1 py-1">
           <MobileNavButton
-            icon="📁"
+            icon={Folder}
             label="Files"
             active={mobilePane === "files"}
             onClick={() => setMobilePane("files")}
           />
           <MobileNavButton
-            icon="🧾"
+            icon={FileCode}
             label="Code"
             active={mobilePane === "code"}
             onClick={() => setMobilePane("code")}
           />
           <MobileNavButton
-            icon="👀"
+            icon={Play}
             label="Preview"
             active={mobilePane === "preview"}
             onClick={() => setMobilePane("preview")}
           />
           <MobileNavButton
-            icon="🤖"
+            icon={ChevronRight}
             label="AI"
             active={mobilePane === "ai"}
             onClick={() => setMobilePane("ai")}
@@ -242,65 +238,48 @@ const SidebarFiles = ({
   compact?: boolean;
 }) => {
   const getFileIcon = (filename: string) => {
-    if (filename.endsWith('.html')) return '🧾';
-    if (filename.endsWith('.css')) return '🎨';
-    if (filename.endsWith('.js') || filename.endsWith('.ts')) return '⚙️';
-    if (filename.endsWith('.json')) return '📦';
-    if (filename.endsWith('.md')) return '📝';
-    return '📄';
+    const Icon = FileCode;
+    return Icon;
   };
 
   return (
     <div className="p-3 space-y-2">
-      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-1">
-        <PanelLeft className="h-3 w-3" />
-        <span>{compact ? "Files" : "📁 Project Files"}</span>
+      <div className="flex items-center gap-2 text-xs font-semibold mb-2">
+        <Folder className="h-4 w-4 text-primary" />
+        <span>Project Files</span>
       </div>
-      <div className="space-y-1 text-sm">
-        {Object.keys(files).map((filename) => (
-          <FileItem
-            key={filename}
-            name={filename}
-            icon={getFileIcon(filename)}
-            active={activeFile === filename}
-            onClick={() => onSelect(filename)}
-          />
-        ))}
+      <div className="space-y-0.5 text-sm">
+        {Object.keys(files).map((filename) => {
+          const Icon = getFileIcon(filename);
+          return (
+            <button
+              key={filename}
+              type="button"
+              onClick={() => onSelect(filename)}
+              className={`w-full text-left px-3 py-2 rounded-md text-xs sm:text-sm cursor-pointer transition-colors flex items-center gap-2 ${
+                activeFile === filename 
+                  ? "bg-primary/15 text-primary border border-primary/30" 
+                  : "hover:bg-secondary/60"
+              }`}
+            >
+              <Icon className="h-4 w-4 flex-shrink-0" />
+              <span className="truncate">{filename}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 };
 
-const FileItem = ({
-  name,
-  icon,
-  active,
-  onClick,
-}: {
-  name: string;
-  icon: string;
-  active?: boolean;
-  onClick?: () => void;
-}) => (
-  <button
-    type="button"
-    onClick={onClick}
-    className={`w-full text-left px-3 py-1.5 rounded-md text-xs sm:text-sm cursor-pointer transition-colors flex items-center gap-2 ${
-      active ? "bg-primary/20 text-primary" : "hover:bg-secondary/60"
-    }`}
-  >
-    <span>{icon}</span>
-    <span className="truncate">{name}</span>
-  </button>
-);
 
 const MobileNavButton = ({
-  icon,
+  icon: Icon,
   label,
   active,
   onClick,
 }: {
-  icon: string;
+  icon: any;
   label: string;
   active?: boolean;
   onClick: () => void;
@@ -308,12 +287,12 @@ const MobileNavButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`flex flex-col items-center justify-center flex-1 py-1 rounded-lg text-[11px] sm:text-xs transition-colors ${
+    className={`flex flex-col items-center justify-center flex-1 py-2 rounded-lg text-[11px] transition-colors ${
       active ? "bg-secondary/60 text-primary" : "hover:bg-secondary/40 text-muted-foreground"
     }`}
   >
-    <span className="text-lg leading-none">{icon}</span>
-    <span>{label}</span>
+    <Icon className="h-5 w-5 mb-0.5" />
+    <span className="font-medium">{label}</span>
   </button>
 );
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Send, Bot, User } from 'lucide-react';
+import { Send, Sparkles, User } from 'lucide-react';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -42,13 +42,18 @@ export const ChatInterface = ({ messages, isLoading, onSendMessage, compact = fa
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground space-y-2">
-            <Bot className="h-12 w-12 opacity-50" />
-            <p className="text-sm">
-              {compact
-                ? "Ask me to generate, edit, or explain code"
-                : "Describe what you want to build and I'll create it for you"}
-            </p>
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-3 px-4">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <Sparkles className="h-8 w-8 text-white" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="font-semibold text-lg">AI Assistant</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {compact
+                  ? "Ask me to create, edit, or manage your project files"
+                  : "Describe what you want to build and I'll handle all file operations for you"}
+              </p>
+            </div>
           </div>
         ) : (
           messages.map((msg, idx) => (
@@ -57,8 +62,8 @@ export const ChatInterface = ({ messages, isLoading, onSendMessage, compact = fa
               className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
             >
               {msg.role === 'assistant' && (
-                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                  <Bot className="h-4 w-4 text-primary" />
+                <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <Sparkles className="h-4 w-4 text-white" />
                 </div>
               )}
               <div
@@ -80,11 +85,11 @@ export const ChatInterface = ({ messages, isLoading, onSendMessage, compact = fa
         )}
         {isLoading && (
           <div className="flex gap-2">
-            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-              <Bot className="h-4 w-4 text-primary animate-pulse" />
+            <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-white animate-pulse" />
             </div>
             <div className="glass border border-border rounded-lg px-3 py-2 text-sm">
-              <span className="animate-pulse">Thinking...</span>
+              <span className="animate-pulse">Processing your request...</span>
             </div>
           </div>
         )}
@@ -98,15 +103,15 @@ export const ChatInterface = ({ messages, isLoading, onSendMessage, compact = fa
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={compact ? "Ask me anything..." : "Describe what you want to build..."}
-            className="min-h-[60px] resize-none"
+            placeholder={compact ? "Tell me what to create, edit, or manage..." : "Describe your project and I'll build it for you..."}
+            className="min-h-[80px] resize-none text-sm"
             disabled={isLoading}
           />
           <Button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
             size="icon"
-            className="h-[60px] w-[60px] flex-shrink-0"
+            className="h-[80px] w-[60px] flex-shrink-0 bg-gradient-to-br from-primary to-accent hover:opacity-90"
           >
             <Send className="h-5 w-5" />
           </Button>
