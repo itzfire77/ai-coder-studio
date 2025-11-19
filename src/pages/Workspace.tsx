@@ -1,7 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { FolderGit2, Play, Save, Settings, PanelRight, PanelLeft, Bot } from "lucide-react";
+import { FolderGit2, Play, Save, Settings, PanelRight, PanelLeft, Bot, Download } from "lucide-react";
 import { Link } from "react-router-dom";
+import { ChatInterface } from "@/components/ChatInterface";
+import { useAIChat } from "@/hooks/useAIChat";
+import { toast } from "sonner";
 
 const DEFAULT_HTML = `<!doctype html>
 <html lang="en">
@@ -24,13 +27,37 @@ const DEFAULT_HTML = `<!doctype html>
 </html>`;
 
 const Workspace = () => {
+  const [files, setFiles] = useState<Record<string, string>>({
+    "index.html": DEFAULT_HTML,
+  });
   const [activeFile, setActiveFile] = useState("index.html");
-  const [code, setCode] = useState(DEFAULT_HTML);
   const [previewCode, setPreviewCode] = useState(DEFAULT_HTML);
-  const [mobilePane, setMobilePane] = useState<"code" | "preview" | "ai" | "files">("code");
+  const [mobilePane, setMobilePane] = useState<"code" | "preview" | "ai" | "files">("ai");
+  
+  const { messages, isLoading, sendMessage } = useAIChat();
 
   const handleRun = () => {
-    setPreviewCode(code);
+    setPreviewCode(files[activeFile] || "");
+  };
+
+  const handleFileOperation = useCallback((op: { type: 'create' | 'edit'; filename: string; content: string }) => {
+    setFiles(prev => ({
+      ...prev,
+      [op.filename]: op.content
+    }));
+    setActiveFile(op.filename);
+    toast.success(`${op.type === 'create' ? 'Created' : 'Updated'} ${op.filename}`);
+  }, []);
+
+  const handleSendMessage = useCallback((message: string) => {
+    sendMessage(message, handleFileOperation);
+  }, [sendMessage, handleFileOperation]);
+
+  const handleImportGitHub = async () => {
+    const repoUrl = prompt("Enter GitHub repository URL:");
+    if (repoUrl) {
+      toast.info("GitHub import coming soon!");
+    }
   };
 
   const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
@@ -49,9 +76,9 @@ const Workspace = () => {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" className="hidden sm:inline-flex">
-            <Save className="h-4 w-4 mr-2" />
-            Save
+          <Button variant="secondary" size="sm" className="hidden sm:inline-flex" onClick={handleImportGitHub}>
+            <Download className="h-4 w-4 mr-2" />
+            Import GitHub
           </Button>
           <Button size="sm" className="bg-accent hover:bg-accent/90" onClick={handleRun}>
             <Play className="h-4 w-4 mr-1 sm:mr-2" />
@@ -69,7 +96,7 @@ const Workspace = () => {
       <div className="hidden md:flex flex-1 overflow-hidden">
         {/* File Explorer */}
         <aside className="w-56 border-r border-border glass overflow-y-auto">
-          <SidebarFiles activeFile={activeFile} onSelect={setActiveFile} />
+          <SidebarFiles files={files} activeFile={activeFile} onSelect={setActiveFile} />
         </aside>
 
         {/* Editor Area */}
@@ -86,8 +113,8 @@ const Workspace = () => {
           <div className="flex-1 bg-secondary/20 p-2 sm:p-4 overflow-auto">
             <textarea
               className="w-full h-full glass rounded-lg p-3 sm:p-4 text-sm font-mono bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
+              value={files[activeFile] || ""}
+              onChange={(e) => setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))}
               spellCheck={false}
             />
           </div>
@@ -119,23 +146,13 @@ const Workspace = () => {
               sandbox="allow-scripts allow-same-origin"
               srcDoc={previewCode}
             />
-            <div className="h-1/2 border-t border-border glass p-3 overflow-auto">
-              <div className="flex items-center gap-2 mb-2 text-xs font-semibold text-muted-foreground">
-                <Bot className="h-3 w-3" />
-                <span>🤖 AI Assistant</span>
-              </div>
-              <p className="text-xs sm:text-sm text-muted-foreground mb-3">
-                Ask UltimateBot to refactor, debug, or explain this file. Full AI chat will be wired next.
-              </p>
-              <Button variant="secondary" size="sm" className="w-full justify-start mb-2">
-                ✨ Generate code for this file
-              </Button>
-              <Button variant="secondary" size="sm" className="w-full justify-start mb-2">
-                🧠 Explain what this does
-              </Button>
-              <Button variant="secondary" size="sm" className="w-full justify-start">
-                🐞 Help me debug
-              </Button>
+            <div className="h-1/2 border-t border-border glass overflow-hidden">
+              <ChatInterface 
+                messages={messages} 
+                isLoading={isLoading} 
+                onSendMessage={handleSendMessage}
+                compact
+              />
             </div>
           </div>
         </aside>
@@ -147,15 +164,15 @@ const Workspace = () => {
         <div className="flex-1 overflow-hidden">
           {mobilePane === "files" && (
             <div className="h-full overflow-y-auto glass border-b border-border p-3">
-              <SidebarFiles activeFile={activeFile} onSelect={setActiveFile} compact />
+              <SidebarFiles files={files} activeFile={activeFile} onSelect={setActiveFile} compact />
             </div>
           )}
           {mobilePane === "code" && (
             <div className="h-full bg-secondary/20 p-2 overflow-auto">
               <textarea
                 className="w-full h-full glass rounded-lg p-3 text-sm font-mono bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
+                value={files[activeFile] || ""}
+                onChange={(e) => setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))}
                 spellCheck={false}
               />
             </div>
@@ -171,25 +188,12 @@ const Workspace = () => {
             </div>
           )}
           {mobilePane === "ai" && (
-            <div className="h-full glass p-4 overflow-auto">
-              <div className="flex items-center gap-2 mb-3 text-sm font-semibold text-muted-foreground">
-                <Bot className="h-4 w-4" />
-                <span>🤖 AI Assistant</span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Chat UI and AI actions will appear here. For now, use these quick actions.
-              </p>
-              <div className="space-y-2">
-                <Button variant="secondary" size="sm" className="w-full justify-start">
-                  ✨ Generate code for this file
-                </Button>
-                <Button variant="secondary" size="sm" className="w-full justify-start">
-                  🧠 Explain what this does
-                </Button>
-                <Button variant="secondary" size="sm" className="w-full justify-start">
-                  🐞 Help me debug
-                </Button>
-              </div>
+            <div className="h-full glass overflow-hidden">
+              <ChatInterface 
+                messages={messages} 
+                isLoading={isLoading} 
+                onSendMessage={handleSendMessage}
+              />
             </div>
           )}
         </div>
@@ -227,47 +231,45 @@ const Workspace = () => {
 };
 
 const SidebarFiles = ({
+  files,
   activeFile,
   onSelect,
   compact = false,
 }: {
+  files: Record<string, string>;
   activeFile: string;
   onSelect: (name: string) => void;
   compact?: boolean;
-}) => (
-  <div className="p-3 space-y-2">
-    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-1">
-      <PanelLeft className="h-3 w-3" />
-      <span>{compact ? "Files" : "📁 Project Files"}</span>
+}) => {
+  const getFileIcon = (filename: string) => {
+    if (filename.endsWith('.html')) return '🧾';
+    if (filename.endsWith('.css')) return '🎨';
+    if (filename.endsWith('.js') || filename.endsWith('.ts')) return '⚙️';
+    if (filename.endsWith('.json')) return '📦';
+    if (filename.endsWith('.md')) return '📝';
+    return '📄';
+  };
+
+  return (
+    <div className="p-3 space-y-2">
+      <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground mb-1">
+        <PanelLeft className="h-3 w-3" />
+        <span>{compact ? "Files" : "📁 Project Files"}</span>
+      </div>
+      <div className="space-y-1 text-sm">
+        {Object.keys(files).map((filename) => (
+          <FileItem
+            key={filename}
+            name={filename}
+            icon={getFileIcon(filename)}
+            active={activeFile === filename}
+            onClick={() => onSelect(filename)}
+          />
+        ))}
+      </div>
     </div>
-    <div className="space-y-1 text-sm">
-      <FileItem
-        name="index.html"
-        icon="🧾"
-        active={activeFile === "index.html"}
-        onClick={() => onSelect("index.html")}
-      />
-      <FileItem
-        name="styles.css"
-        icon="🎨"
-        active={activeFile === "styles.css"}
-        onClick={() => onSelect("styles.css")}
-      />
-      <FileItem
-        name="main.ts"
-        icon="⚙️"
-        active={activeFile === "main.ts"}
-        onClick={() => onSelect("main.ts")}
-      />
-      <FileItem
-        name="package.json"
-        icon="📦"
-        active={activeFile === "package.json"}
-        onClick={() => onSelect("package.json")}
-      />
-    </div>
-  </div>
-);
+  );
+};
 
 const FileItem = ({
   name,

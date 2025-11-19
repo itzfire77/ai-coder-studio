@@ -1,113 +1,91 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, FolderGit2, Settings, LogOut } from "lucide-react";
+import { LogOut, Settings, Sparkles } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const [projects] = useState([
-    {
-      id: "1",
-      name: "My First Project",
-      language: "React",
-      lastModified: "2 hours ago",
-    },
-  ]);
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Failed to logout");
     } else {
+      toast.success("Logged out successfully");
       navigate("/");
     }
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border glass sticky top-0 z-50">
+      <header className="border-b border-border glass">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FolderGit2 className="h-6 w-6 text-primary" />
-            <h1 className="text-xl font-bold">UltimateBot</h1>
-          </div>
-          
+          <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            UltimateBot
+          </h1>
           <div className="flex items-center gap-2">
             <Link to="/settings">
-              <Button variant="secondary" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+              <Button variant="ghost" size="icon">
+                <Settings className="h-5 w-5" />
               </Button>
             </Link>
-            <Button variant="secondary" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
+            <Button variant="ghost" size="icon" onClick={handleLogout}>
+              <LogOut className="h-5 w-5" />
             </Button>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">Your Workspace</h2>
-          <p className="text-muted-foreground">
-            Create, manage, and deploy your projects
-          </p>
-        </div>
+      {/* Main Content */}
+      <main className="flex-1 container mx-auto px-4 py-8 flex flex-col items-center justify-center">
+        <div className="max-w-3xl w-full text-center space-y-6">
+          {/* Hero Section */}
+          <div className="space-y-4 mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-primary to-accent animate-pulse-slow">
+              <Sparkles className="h-10 w-10 text-white" />
+            </div>
+            <h2 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent animate-gradient">
+              Welcome to UltimateBot
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              Your AI-powered coding workspace. Describe what you want to build, and I'll create it for you.
+            </p>
+          </div>
 
-        {/* New Project Button */}
-        <Button
-          size="lg"
-          className="mb-8 hover-lift group"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          New Project
-        </Button>
-
-        {/* Projects Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project) => (
-            <Link key={project.id} to={`/workspace/${project.id}`}>
-              <Card className="glass p-6 hover-lift group cursor-pointer border-border/50 hover:border-primary/50 transition-colors">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                    <FolderGit2 className="h-6 w-6 text-primary" />
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {project.lastModified}
-                  </span>
-                </div>
-                
-                <h3 className="text-xl font-semibold mb-2">{project.name}</h3>
-                <p className="text-sm text-muted-foreground">{project.language}</p>
-              </Card>
-            </Link>
-          ))}
-          
-          {/* Empty State */}
-          {projects.length === 0 && (
-            <Card className="glass p-12 text-center col-span-full border-dashed">
-              <FolderGit2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No projects yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Create your first project to get started
-              </p>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Project
+          {/* CTA */}
+          <div className="glass rounded-2xl p-8 border border-border space-y-4">
+            <h3 className="text-2xl font-semibold">Ready to start building?</h3>
+            <p className="text-muted-foreground">
+              Open the workspace and chat with AI to create your project
+            </p>
+            <Link to="/workspace">
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-lg px-8 py-6">
+                <Sparkles className="h-5 w-5 mr-2" />
+                Open Workspace
               </Button>
-            </Card>
-          )}
+            </Link>
+          </div>
+
+          {/* Features */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
+            <div className="glass rounded-lg p-4 border border-border">
+              <div className="text-3xl mb-2">🤖</div>
+              <h4 className="font-semibold mb-1">AI-Powered</h4>
+              <p className="text-xs text-muted-foreground">Chat with AI to generate code</p>
+            </div>
+            <div className="glass rounded-lg p-4 border border-border">
+              <div className="text-3xl mb-2">⚡</div>
+              <h4 className="font-semibold mb-1">Live Preview</h4>
+              <p className="text-xs text-muted-foreground">See changes in real-time</p>
+            </div>
+            <div className="glass rounded-lg p-4 border border-border">
+              <div className="text-3xl mb-2">🔗</div>
+              <h4 className="font-semibold mb-1">GitHub Sync</h4>
+              <p className="text-xs text-muted-foreground">Import from repositories</p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
