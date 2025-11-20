@@ -4,12 +4,12 @@ import { Home, Play, Settings, ChevronRight, ChevronLeft, Download, FileCode, Fo
 import { Link } from "react-router-dom";
 import { ChatInterface } from "@/components/ChatInterface";
 import { useAIChat } from "@/hooks/useAIChat";
-import { toast } from "sonner";
 
 const DEFAULT_HTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>UltimateBot Preview</title>
     <style>
       body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background:#020817; color:#e5e7eb; display:flex; align-items:center; justify-content:center; height:100vh; }
@@ -37,17 +37,81 @@ const Workspace = () => {
   const { messages, isLoading, sendMessage } = useAIChat();
 
   const handleRun = () => {
-    setPreviewCode(files[activeFile] || "");
+    const file = files[activeFile] || "";
+    const ext = activeFile.split('.').pop()?.toLowerCase();
+    
+    // For HTML files, use directly
+    if (ext === 'html') {
+      setPreviewCode(file);
+      return;
+    }
+    
+    // For JS/TS/JSX/TSX React files, wrap in HTML with module support
+    if (['js', 'jsx', 'ts', 'tsx'].includes(ext || '')) {
+      const wrappedCode = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>body { margin: 0; font-family: system-ui; }</style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel">${file}</script>
+  </body>
+</html>`;
+      setPreviewCode(wrappedCode);
+      return;
+    }
+    
+    // For other files, display as plain text
+    setPreviewCode(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body { margin: 0; padding: 2rem; font-family: 'Courier New', monospace; background: #1e1e1e; color: #d4d4d4; }
+      pre { margin: 0; white-space: pre-wrap; word-wrap: break-word; }
+    </style>
+  </head>
+  <body>
+    <pre>${file.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+  </body>
+</html>`);
   };
 
-  const handleFileOperation = useCallback((op: { type: 'create' | 'edit'; filename: string; content: string }) => {
-    setFiles(prev => ({
-      ...prev,
-      [op.filename]: op.content
-    }));
-    setActiveFile(op.filename);
-    toast.success(`${op.type === 'create' ? 'Created' : 'Updated'} ${op.filename}`);
-  }, []);
+  const handleFileOperation = useCallback((op: { type: 'create' | 'edit' | 'delete' | 'rename' | 'folder'; filename: string; content?: string; newFilename?: string }) => {
+    if (op.type === 'create' || op.type === 'edit') {
+      setFiles(prev => ({
+        ...prev,
+        [op.filename]: op.content || ''
+      }));
+      setActiveFile(op.filename);
+    } else if (op.type === 'delete') {
+      setFiles(prev => {
+        const newFiles = { ...prev };
+        delete newFiles[op.filename];
+        return newFiles;
+      });
+      if (activeFile === op.filename) {
+        setActiveFile(Object.keys(files)[0] || 'index.html');
+      }
+    } else if (op.type === 'rename' && op.newFilename) {
+      setFiles(prev => {
+        const newFiles = { ...prev };
+        newFiles[op.newFilename!] = prev[op.filename];
+        delete newFiles[op.filename];
+        return newFiles;
+      });
+      if (activeFile === op.filename) {
+        setActiveFile(op.newFilename);
+      }
+    }
+    // Folder creation is just tracked for structure, no action needed
+  }, [activeFile, files]);
 
   const handleSendMessage = useCallback((message: string) => {
     sendMessage(message, handleFileOperation);
@@ -56,7 +120,7 @@ const Workspace = () => {
   const handleImportGitHub = async () => {
     const repoUrl = prompt("Enter GitHub repository URL:");
     if (repoUrl) {
-      toast.info("GitHub import coming soon!");
+      console.log("GitHub import coming soon for:", repoUrl);
     }
   };
 
