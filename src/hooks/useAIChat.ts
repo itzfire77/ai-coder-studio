@@ -6,10 +6,11 @@ type Message = {
 };
 
 type FileOperation = {
-  type: 'create' | 'edit';
+  type: 'create' | 'edit' | 'delete' | 'rename' | 'folder';
   filename: string;
-  content: string;
-  language: string;
+  content?: string;
+  language?: string;
+  newFilename?: string;
 };
 
 export const useAIChat = () => {
@@ -20,6 +21,9 @@ export const useAIChat = () => {
     const operations: FileOperation[] = [];
     const fileCreateRegex = /FILE_CREATE:\s*([^\n]+)\n```(\w+)\n([\s\S]*?)```/g;
     const fileEditRegex = /FILE_EDIT:\s*([^\n]+)\n```(\w+)\n([\s\S]*?)```/g;
+    const fileDeleteRegex = /FILE_DELETE:\s*([^\n]+)/g;
+    const fileRenameRegex = /FILE_RENAME:\s*([^\n]+)\s*->\s*([^\n]+)/g;
+    const folderCreateRegex = /FOLDER_CREATE:\s*([^\n]+)/g;
 
     let match;
     while ((match = fileCreateRegex.exec(text)) !== null) {
@@ -37,6 +41,28 @@ export const useAIChat = () => {
         filename: match[1].trim(),
         language: match[2],
         content: match[3].trim(),
+      });
+    }
+
+    while ((match = fileDeleteRegex.exec(text)) !== null) {
+      operations.push({
+        type: 'delete',
+        filename: match[1].trim(),
+      });
+    }
+
+    while ((match = fileRenameRegex.exec(text)) !== null) {
+      operations.push({
+        type: 'rename',
+        filename: match[1].trim(),
+        newFilename: match[2].trim(),
+      });
+    }
+
+    while ((match = folderCreateRegex.exec(text)) !== null) {
+      operations.push({
+        type: 'folder',
+        filename: match[1].trim(),
       });
     }
 
