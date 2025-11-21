@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings, Sparkles } from "lucide-react";
+import { LogOut, Settings, Sparkles, Cpu, MonitorPlay, GitBranch } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -70,20 +70,20 @@ const Dashboard = () => {
 
           {/* Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">
-            <div className="glass rounded-lg p-4 border border-border">
-              <div className="text-3xl mb-2">🤖</div>
+            <div className="glass rounded-lg p-4 border border-border flex flex-col items-start gap-2">
+              <Cpu className="h-6 w-6 text-primary" />
               <h4 className="font-semibold mb-1">AI-Powered</h4>
-              <p className="text-xs text-muted-foreground">Chat with AI to generate code</p>
+              <p className="text-xs text-muted-foreground">Chat with AI to generate and manage your codebase.</p>
             </div>
-            <div className="glass rounded-lg p-4 border border-border">
-              <div className="text-3xl mb-2">⚡</div>
+            <div className="glass rounded-lg p-4 border border-border flex flex-col items-start gap-2">
+              <MonitorPlay className="h-6 w-6 text-accent" />
               <h4 className="font-semibold mb-1">Live Preview</h4>
-              <p className="text-xs text-muted-foreground">See changes in real-time</p>
+              <p className="text-xs text-muted-foreground">See changes instantly in a universal, multi-language preview.</p>
             </div>
-            <div className="glass rounded-lg p-4 border border-border">
-              <div className="text-3xl mb-2">🔗</div>
+            <div className="glass rounded-lg p-4 border border-border flex flex-col items-start gap-2">
+              <GitBranch className="h-6 w-6 text-primary" />
               <h4 className="font-semibold mb-1">GitHub Sync</h4>
-              <p className="text-xs text-muted-foreground">Import from repositories</p>
+              <p className="text-xs text-muted-foreground">Import repositories and keep your projects in sync.</p>
             </div>
           </div>
         </div>
