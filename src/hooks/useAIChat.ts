@@ -78,7 +78,7 @@ export const useAIChat = () => {
       let assistantContent = '';
 
       try {
-        const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-chat`;
+        const CHAT_URL = `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.functions.supabase.co/ai-chat`;
         
         const resp = await fetch(CHAT_URL, {
           method: 'POST',
