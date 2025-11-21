@@ -27,16 +27,15 @@ const DEFAULT_HTML = `<!doctype html>
 </html>`;
 
 const Workspace = () => {
-  const [files, setFiles] = useState<Record<string, string>>({
-    "index.html": DEFAULT_HTML,
-  });
-  const [activeFile, setActiveFile] = useState("index.html");
+  const [files, setFiles] = useState<Record<string, string>>({});
+  const [activeFile, setActiveFile] = useState<string | null>(null);
   const [previewCode, setPreviewCode] = useState(DEFAULT_HTML);
   const [mobilePane, setMobilePane] = useState<"code" | "preview" | "ai" | "files">("ai");
   
   const { messages, isLoading, sendMessage } = useAIChat();
 
   const handleRun = () => {
+    if (!activeFile) return;
     const file = files[activeFile] || "";
     const ext = activeFile.split('.').pop()?.toLowerCase();
     
@@ -94,11 +93,12 @@ const Workspace = () => {
       setFiles(prev => {
         const newFiles = { ...prev };
         delete newFiles[op.filename];
+        const remaining = Object.keys(newFiles);
+        if (activeFile === op.filename) {
+          setActiveFile(remaining.length ? remaining[0] : null);
+        }
         return newFiles;
       });
-      if (activeFile === op.filename) {
-        setActiveFile(Object.keys(files)[0] || 'index.html');
-      }
     } else if (op.type === 'rename' && op.newFilename) {
       setFiles(prev => {
         const newFiles = { ...prev };
@@ -167,23 +167,26 @@ const Workspace = () => {
 
         {/* Editor Area */}
         <main className="flex-1 flex flex-col">
-          {/* Tab Bar */}
-          <div className="border-b border-border glass px-3 sm:px-4 py-2 flex items-center gap-2">
-            <div className="px-3 py-1.5 bg-secondary rounded-md text-xs sm:text-sm flex items-center gap-2">
-              <FileCode className="h-3.5 w-3.5 text-primary" />
-              <span className="font-medium">{activeFile}</span>
-            </div>
+        {/* Tab Bar */}
+        <div className="border-b border-border glass px-3 sm:px-4 py-2 flex items-center gap-2">
+          <div className="px-3 py-1.5 bg-secondary rounded-md text-xs sm:text-sm flex items-center gap-2">
+            <FileCode className="h-3.5 w-3.5 text-primary" />
+            <span className="font-medium">{activeFile ?? "No file selected"}</span>
           </div>
+        </div>
 
-          {/* Simple Code Editor */}
-          <div className="flex-1 bg-secondary/20 p-2 sm:p-4 overflow-auto">
-            <textarea
-              className="w-full h-full glass rounded-lg p-3 sm:p-4 text-sm font-mono bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
-              value={files[activeFile] || ""}
-              onChange={(e) => setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))}
-              spellCheck={false}
-            />
-          </div>
+        {/* Simple Code Editor */}
+        <div className="flex-1 bg-secondary/20 p-2 sm:p-4 overflow-auto">
+          <textarea
+            className="w-full h-full glass rounded-lg p-3 sm:p-4 text-sm font-mono bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
+            value={activeFile ? files[activeFile] || "" : ""}
+            onChange={(e) =>
+              activeFile && setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))
+            }
+            spellCheck={false}
+            placeholder={activeFile ? "" : "Ask the AI to create your first file..."}
+          />
+        </div>
 
           {/* Console - Hidden for cleaner UI */}
           <div className="h-8 border-t border-border glass px-3 flex items-center">
@@ -231,9 +234,12 @@ const Workspace = () => {
             <div className="h-full bg-secondary/20 p-2 overflow-auto">
               <textarea
                 className="w-full h-full glass rounded-lg p-3 text-sm font-mono bg-secondary/60 focus:outline-none focus:ring-2 focus:ring-primary/60 resize-none"
-                value={files[activeFile] || ""}
-                onChange={(e) => setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))}
+                value={activeFile ? files[activeFile] || "" : ""}
+                onChange={(e) =>
+                  activeFile && setFiles(prev => ({ ...prev, [activeFile]: e.target.value }))
+                }
                 spellCheck={false}
+                placeholder={activeFile ? "" : "Ask the AI to create your first file..."}
               />
             </div>
           )}
@@ -297,7 +303,7 @@ const SidebarFiles = ({
   compact = false,
 }: {
   files: Record<string, string>;
-  activeFile: string;
+  activeFile: string | null;
   onSelect: (name: string) => void;
   compact?: boolean;
 }) => {
