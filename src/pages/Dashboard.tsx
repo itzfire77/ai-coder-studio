@@ -1,16 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { LogOut, Settings, Sparkles, Pencil, Check } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { LogOut, Settings, Plus, Paperclip, Mic, ArrowUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [projectName, setProjectName] = useState("Untitled Project");
-  const [isEditing, setIsEditing] = useState(false);
-  const [tempName, setTempName] = useState(projectName);
+  const [chatInput, setChatInput] = useState("");
+  const [activeTab, setActiveTab] = useState<"recent" | "projects">("recent");
 
   const handleLogout = async () => {
     const { error } = await supabase.auth.signOut();
@@ -22,38 +21,37 @@ const Dashboard = () => {
     }
   };
 
-  const handleSaveProjectName = () => {
-    if (tempName.trim()) {
-      setProjectName(tempName.trim());
-      setIsEditing(false);
-      toast.success("Project name updated");
+  const handleSendMessage = () => {
+    if (chatInput.trim()) {
+      // Navigate to workspace with the message
+      navigate("/workspace", { state: { initialMessage: chatInput } });
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSaveProjectName();
-    } else if (e.key === "Escape") {
-      setTempName(projectName);
-      setIsEditing(false);
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-[#1a0b2e] via-[#2d1b3d] to-[#3d1e2e] relative overflow-hidden">
+      {/* Animated gradient orbs */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl animate-pulse" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+      
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/30 backdrop-blur-xl">
+      <header className="relative z-10 border-b border-white/5 bg-black/20 backdrop-blur-xl">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">
+          <h1 className="text-xl font-semibold text-white">
             UltimateBot
           </h1>
           <div className="flex items-center gap-2">
-            <Link to="/settings">
-              <Button variant="ghost" size="icon" className="hover:bg-muted/50 transition-all duration-200">
-                <Settings className="h-4 w-4" />
-              </Button>
-            </Link>
-            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-muted/50 transition-all duration-200">
+            <Button variant="ghost" size="icon" className="hover:bg-white/10 text-white transition-all duration-200">
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleLogout} className="hover:bg-white/10 text-white transition-all duration-200">
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -61,87 +59,94 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center px-4">
-        <div className="w-full max-w-4xl space-y-12 animate-fade-in">
-          {/* Project Name Section */}
-          <div className="text-center space-y-6">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border border-primary/20 backdrop-blur-xl mb-4">
-              <Sparkles className="h-8 w-8 text-primary" />
-            </div>
-            
-            <div className="space-y-3">
-              {!isEditing ? (
-                <div className="group inline-flex items-center gap-3 cursor-pointer" onClick={() => setIsEditing(true)}>
-                  <h2 className="text-5xl font-bold text-foreground tracking-tight transition-all duration-300 group-hover:text-primary">
-                    {projectName}
-                  </h2>
-                  <Pencil className="h-6 w-6 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2 max-w-2xl mx-auto">
-                  <Input
-                    value={tempName}
-                    onChange={(e) => setTempName(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    className="text-5xl font-bold text-center h-20 bg-card/50 border-primary/50 focus:border-primary transition-all duration-200"
-                    autoFocus
-                  />
+      <main className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pb-32">
+        <div className="w-full max-w-3xl space-y-8 animate-fade-in">
+          {/* Hero Text */}
+          <h2 className="text-5xl md:text-6xl font-bold text-center text-white tracking-tight">
+            Dreams start as drafts.
+          </h2>
+
+          {/* Chat Input Box */}
+          <div className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/50 to-accent/50 rounded-3xl blur opacity-30 group-hover:opacity-50 transition duration-300" />
+            <div className="relative bg-[#1a1a1a] rounded-3xl p-4 border border-white/10 backdrop-blur-xl">
+              <Input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="Ask UltimateBot to create"
+                className="bg-transparent border-0 text-white placeholder:text-gray-400 text-lg h-auto py-3 px-4 focus-visible:ring-0 focus-visible:ring-offset-0"
+              />
+              
+              {/* Action Buttons */}
+              <div className="flex items-center justify-between mt-2 px-2">
+                <div className="flex items-center gap-2">
                   <Button
                     size="icon"
-                    onClick={handleSaveProjectName}
-                    className="h-12 w-12 bg-primary hover:bg-primary/90 transition-all duration-200"
+                    variant="ghost"
+                    className="h-10 w-10 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-200"
                   >
-                    <Check className="h-6 w-6" />
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-10 w-10 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-200"
+                  >
+                    <Paperclip className="h-5 w-5" />
                   </Button>
                 </div>
-              )}
-              <p className="text-muted-foreground text-lg">
-                Start building with AI assistance
-              </p>
-            </div>
-          </div>
-
-          {/* CTA Button */}
-          <div className="flex justify-center">
-            <Link to="/workspace">
-              <Button 
-                size="lg" 
-                className="h-14 px-8 text-base bg-primary hover:bg-primary/90 text-primary-foreground font-medium rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-all duration-300 hover:-translate-y-0.5"
-              >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Open Workspace
-              </Button>
-            </Link>
-          </div>
-
-          {/* Info Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-16">
-            <div className="group p-6 rounded-xl bg-card/30 border border-border/50 backdrop-blur-xl hover:bg-card/50 hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-all duration-300">
-                <Sparkles className="h-5 w-5 text-primary" />
+                
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-10 w-10 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition-all duration-200"
+                  >
+                    <Mic className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    onClick={handleSendMessage}
+                    disabled={!chatInput.trim()}
+                    className="h-12 w-12 rounded-full bg-gray-200 hover:bg-white text-black disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
-              <h4 className="font-semibold text-foreground mb-2">AI-Powered</h4>
-              <p className="text-sm text-muted-foreground">Natural language commands to build anything</p>
-            </div>
-            
-            <div className="group p-6 rounded-xl bg-card/30 border border-border/50 backdrop-blur-xl hover:bg-card/50 hover:border-accent/30 transition-all duration-300 hover:-translate-y-1">
-              <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-all duration-300">
-                <Sparkles className="h-5 w-5 text-accent" />
-              </div>
-              <h4 className="font-semibold text-foreground mb-2">Real-time Preview</h4>
-              <p className="text-sm text-muted-foreground">See your changes instantly as you build</p>
-            </div>
-            
-            <div className="group p-6 rounded-xl bg-card/30 border border-border/50 backdrop-blur-xl hover:bg-card/50 hover:border-primary/30 transition-all duration-300 hover:-translate-y-1">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-all duration-300">
-                <Sparkles className="h-5 w-5 text-primary" />
-              </div>
-              <h4 className="font-semibold text-foreground mb-2">Multi-Language</h4>
-              <p className="text-sm text-muted-foreground">Support for all major frameworks and languages</p>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Bottom Tabs */}
+      <div className="relative z-10 border-t border-white/5 bg-black/20 backdrop-blur-xl">
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setActiveTab("recent")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === "recent"
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              Recently viewed
+            </button>
+            <button
+              onClick={() => setActiveTab("projects")}
+              className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === "projects"
+                  ? "bg-white/10 text-white"
+                  : "text-gray-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              My projects
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

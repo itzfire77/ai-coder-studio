@@ -1,7 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Home, Play, Settings, ChevronRight, ChevronLeft, Download, FileCode, Folder } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ChatInterface } from "@/components/ChatInterface";
 import { useAIChat } from "@/hooks/useAIChat";
 
@@ -27,12 +27,58 @@ const DEFAULT_HTML = `<!doctype html>
 </html>`;
 
 const Workspace = () => {
+  const location = useLocation();
   const [files, setFiles] = useState<Record<string, string>>({});
   const [activeFile, setActiveFile] = useState<string | null>(null);
   const [previewCode, setPreviewCode] = useState(DEFAULT_HTML);
   const [mobilePane, setMobilePane] = useState<"code" | "preview" | "ai" | "files">("ai");
   
   const { messages, isLoading, sendMessage } = useAIChat();
+
+  const handleFileOperation = useCallback((op: { type: 'create' | 'edit' | 'delete' | 'rename' | 'folder'; filename: string; content?: string; newFilename?: string }) => {
+    if (op.type === 'create' || op.type === 'edit') {
+      setFiles(prev => ({
+        ...prev,
+        [op.filename]: op.content || ''
+      }));
+      setActiveFile(op.filename);
+    } else if (op.type === 'delete') {
+      setFiles(prev => {
+        const newFiles = { ...prev };
+        delete newFiles[op.filename];
+        const remaining = Object.keys(newFiles);
+        if (activeFile === op.filename) {
+          setActiveFile(remaining.length ? remaining[0] : null);
+        }
+        return newFiles;
+      });
+    } else if (op.type === 'rename' && op.newFilename) {
+      setFiles(prev => {
+        const newFiles = { ...prev };
+        newFiles[op.newFilename!] = prev[op.filename];
+        delete newFiles[op.filename];
+        return newFiles;
+      });
+      if (activeFile === op.filename) {
+        setActiveFile(op.newFilename);
+      }
+    }
+    // Folder creation is just tracked for structure, no action needed
+  }, [activeFile, files]);
+
+  const handleSendMessage = useCallback((message: string) => {
+    sendMessage(message, handleFileOperation);
+  }, [sendMessage, handleFileOperation]);
+
+  // Handle initial message from Dashboard
+  useEffect(() => {
+    const initialMessage = location.state?.initialMessage;
+    if (initialMessage) {
+      handleSendMessage(initialMessage);
+      // Clear the state to prevent re-sending on navigation
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const handleRun = () => {
     if (!activeFile) return;
@@ -82,40 +128,6 @@ const Workspace = () => {
 </html>`);
   };
 
-  const handleFileOperation = useCallback((op: { type: 'create' | 'edit' | 'delete' | 'rename' | 'folder'; filename: string; content?: string; newFilename?: string }) => {
-    if (op.type === 'create' || op.type === 'edit') {
-      setFiles(prev => ({
-        ...prev,
-        [op.filename]: op.content || ''
-      }));
-      setActiveFile(op.filename);
-    } else if (op.type === 'delete') {
-      setFiles(prev => {
-        const newFiles = { ...prev };
-        delete newFiles[op.filename];
-        const remaining = Object.keys(newFiles);
-        if (activeFile === op.filename) {
-          setActiveFile(remaining.length ? remaining[0] : null);
-        }
-        return newFiles;
-      });
-    } else if (op.type === 'rename' && op.newFilename) {
-      setFiles(prev => {
-        const newFiles = { ...prev };
-        newFiles[op.newFilename!] = prev[op.filename];
-        delete newFiles[op.filename];
-        return newFiles;
-      });
-      if (activeFile === op.filename) {
-        setActiveFile(op.newFilename);
-      }
-    }
-    // Folder creation is just tracked for structure, no action needed
-  }, [activeFile, files]);
-
-  const handleSendMessage = useCallback((message: string) => {
-    sendMessage(message, handleFileOperation);
-  }, [sendMessage, handleFileOperation]);
 
   const handleImportGitHub = async () => {
     const repoUrl = prompt("Enter GitHub repository URL:");
